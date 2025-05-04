@@ -23,9 +23,9 @@ ffmpeg: true
 maxStreams: 10
 filters:
   - filter: sports.*
-    type: include
+    type: name
   - filter: news|weather
-    type: exclude
+    type: group
 `)
 
 		tmpfile, err := os.CreateTemp("", "config*.yaml")
@@ -54,13 +54,57 @@ filters:
 		assert.Equal(t, 10, config.MaxStreams)
 		assert.Len(t, config.Filters, 2)
 		assert.Equal(t, "sports.*", config.Filters[0].Value)
-		assert.Equal(t, "include", config.Filters[0].Type)
+		assert.Equal(t, "name", config.Filters[0].Type)
 		assert.NotNil(t, config.Filters[0].GetRegexp())
 		assert.Equal(t, "news|weather", config.Filters[1].Value)
-		assert.Equal(t, "exclude", config.Filters[1].Type)
+		assert.Equal(t, "group", config.Filters[1].Type)
 		assert.NotNil(t, config.Filters[1].GetRegexp())
 		assert.Equal(t, 2*time.Hour, config.RefreshInterval)
 	})
+
+	t.Run("Valid Configuration without filter", func(t *testing.T) {
+		content := []byte(`
+logLevel: info
+iptvUrl: http://example.com/iptv
+epgUrl: http://example.com/epg
+listenAddress: localhost:8080
+serverAddress: iptvserver:8080
+refreshInterval: '2h'
+ffmpeg: true
+maxStreams: 10
+`)
+
+		tmpfile, err := os.CreateTemp("", "config*.yaml")
+		if err != nil {
+			t.Fatalf("Failed to create temp file: %v", err)
+		}
+		defer os.Remove(tmpfile.Name())
+
+		if _, err := tmpfile.Write(content); err != nil {
+			t.Fatalf("Failed to write to temp file: %v", err)
+		}
+		if err := tmpfile.Close(); err != nil {
+			t.Fatalf("Failed to close temp file: %v", err)
+		}
+
+		config, err := LoadConfig(tmpfile.Name())
+		assert.NoError(t, err, "error loading config")
+		assert.NotNil(t, config)
+
+		assert.Equal(t, "info", config.LogLevel)
+		assert.Equal(t, "http://example.com/iptv", config.IPTVUrl)
+		assert.Equal(t, "http://example.com/epg", config.EPGUrl)
+		assert.Equal(t, "localhost:8080", config.ListenAddress)
+		assert.Equal(t, "iptvserver:8080", config.ServerAddress)
+		assert.True(t, config.UseFFMPEG)
+		assert.Equal(t, 10, config.MaxStreams)
+		assert.Len(t, config.Filters, 1)
+		assert.Equal(t, ".*", config.Filters[0].Value)
+		assert.Equal(t, "name", config.Filters[0].Type)
+		assert.NotNil(t, config.Filters[0].GetRegexp())
+		assert.Equal(t, 2*time.Hour, config.RefreshInterval)
+	})
+
 
 	// Test with invalid regular expression
 	t.Run("Invalid Regular Expression", func(t *testing.T) {
@@ -71,9 +115,9 @@ epgUrl: http://example.com/iptv
 serverAddress: iptvserver:8080
 filters:
   - filter: sports.*
-    type: include
+    type: name
   - filter: news[
-    type: exclude
+    type: group
 `)
 
 		tmpfile, err := os.CreateTemp("", "config*.yaml")
