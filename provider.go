@@ -35,13 +35,13 @@ func newPlaylistLoader(baseAddress string, filters []*Filter) *playlistLoader {
 }
 
 func (pl *playlistLoader) findIndexWithID(track *Track) int {
-	id := track.Tags["tvg-id"]
+	id := track.Attrs["tvg-id"]
 	if len(id) == 0 {
 		return -1
 	}
 
 	for i := range pl.tracks {
-		if pl.tracks[i].Tags["tvg-id"] == id {
+		if pl.tracks[i].Attrs["tvg-id"] == id {
 			return i
 		}
 	}
@@ -72,7 +72,7 @@ func (pl *playlistLoader) OnTrack(track *Track) {
 			log.WithField("type", filter.Type).Panic("invalid filter type")
 		}
 
-		val := track.Tags[field]
+		val := track.Attrs[field]
 		if len(val) == 0 {
 			continue
 		}
@@ -86,7 +86,7 @@ func (pl *playlistLoader) OnTrack(track *Track) {
 func (pl *playlistLoader) processTrack(track *Track, priority int) {
 	name := track.Name
 
-	if len(track.Tags["tvg-id"]) == 0 {
+	if len(track.Attrs["tvg-id"]) == 0 {
 		log.WithField("track", track).Debug("missing tvg-id")
 	}
 
@@ -137,9 +137,17 @@ func (pl *playlistLoader) OnPlaylistEnd() {
 		if rewriteURL {
 			uri = fmt.Sprintf("http://%s/channel/%d", pl.baseAddress, i)
 		}
+
 		// Remove xui-id from the tags
 		fixedRaw := reXuiid.ReplaceAllString(track.Raw, "")
-		pl.m3u.WriteString(fmt.Sprintf("%s\n%s\n", fixedRaw, uri))
+
+		pl.m3u.WriteString(fmt.Sprintf("%s\n", fixedRaw))
+
+		for k, v := range track.Tags {
+			pl.m3u.WriteString(fmt.Sprintf("#%s:%s\n", k, v))
+		}
+
+		pl.m3u.WriteString(fmt.Sprintf("%s\n", uri))
 	}
 }
 
@@ -211,7 +219,7 @@ func (p *Provider) loadXMLTv(reader io.Reader) (*xmltv.TV, error) {
 
 	channels := make(map[string]bool)
 	for _, track := range p.playlist.tracks {
-		id := track.Tags["tvg-id"]
+		id := track.Attrs["tvg-id"]
 		if len(id) == 0 {
 			continue
 		}

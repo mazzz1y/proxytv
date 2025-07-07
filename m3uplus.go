@@ -21,6 +21,7 @@ type Track struct {
 	Name       string
 	Length     float64
 	URI        *url.URL
+	Attrs      map[string]string
 	Tags       map[string]string
 	Raw        string
 	LineNumber int
@@ -28,6 +29,10 @@ type Track struct {
 
 var errMalformedM3U = errors.New("malformed M3U provided")
 var errMissingExtinf = errors.New("URL found without preceding EXTINF")
+
+var whitelistedTags = []string{
+	"EXTGRP",
+}
 
 func loadM3u(r io.Reader, handler m3uHandler) error {
 	scanner := bufio.NewScanner(r)
@@ -52,13 +57,19 @@ func loadM3u(r io.Reader, handler m3uHandler) error {
 			currentTrack = &Track{
 				Raw:        line,
 				LineNumber: lineNum,
+				Attrs:      make(map[string]string),
+				Tags:       make(map[string]string),
 			}
 			var err error
-			currentTrack.Length, currentTrack.Name, currentTrack.Tags, err = decodeInfoLine(line)
+			currentTrack.Length, currentTrack.Name, currentTrack.Attrs, err = decodeInfoLine(line)
 			if err != nil {
 				return err
 			}
-
+		case hasWhitelistedTagPrefix(line):
+			if currentTrack == nil {
+				return errMissingExtinf
+			}
+			processTag(currentTrack, line)
 		case isURL(line):
 			if currentTrack == nil {
 				return errMissingExtinf
@@ -81,6 +92,26 @@ func loadM3u(r io.Reader, handler m3uHandler) error {
 	handler.OnPlaylistEnd()
 
 	return nil
+}
+
+func hasWhitelistedTagPrefix(line string) bool {
+	for _, tag := range whitelistedTags {
+		if strings.HasPrefix(line, "#"+tag+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func processTag(track *Track, line string) {
+	for _, tag := range whitelistedTags {
+		prefix := "#" + tag + ":"
+		if strings.HasPrefix(line, prefix) {
+			tagValue := strings.TrimPrefix(line, prefix)
+			track.Tags[tag] = tagValue
+			return
+		}
+	}
 }
 
 func isURL(str string) bool {

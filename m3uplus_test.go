@@ -47,13 +47,13 @@ http://example.com/channel2`,
 						Name:   "Channel 1",
 						Length: 0,
 						URI:    mustParseURL("http://example.com/channel1"),
-						Tags:   map[string]string{"tvg-id": "id1", "tvg-name": "name1"},
+						Attrs:  map[string]string{"tvg-id": "id1", "tvg-name": "name1"},
 					},
 					{
 						Name:   "Channel 2",
 						Length: 0,
 						URI:    mustParseURL("http://example.com/channel2"),
-						Tags:   map[string]string{"tvg-id": "id2", "tvg-name": "name2"},
+						Attrs:  map[string]string{"tvg-id": "id2", "tvg-name": "name2"},
 					},
 				},
 				playlistEndCalled: true,
@@ -94,7 +94,7 @@ http://example.com/channel1`,
 					assert.Equal(t, expectedTrack.Name, handler.tracks[i].Name)
 					assert.Equal(t, expectedTrack.Length, handler.tracks[i].Length)
 					assert.Equal(t, expectedTrack.URI, handler.tracks[i].URI)
-					assert.Equal(t, expectedTrack.Tags, handler.tracks[i].Tags)
+					assert.Equal(t, expectedTrack.Attrs, handler.tracks[i].Attrs)
 				}
 			}
 		})

@@ -40,13 +40,17 @@ func TestProviderLoad(t *testing.T) {
 			},
 			m3uContent: `#EXTM3U
 #EXTINF:-1 tvg-id="id1" tvg-name="name1",Channel 1
+#EXTGRP:Group1
 http://example.com/channel1
 #EXTINF:-1 tvg-id="id2" tvg-name="name2",Channel 2
+#EXTGRP:Group2
 http://example.com/channel2`,
 			expectedM3u: `#EXTM3U
 #EXTINF:-1 tvg-id="id1" tvg-name="name1",Channel 1
+#EXTGRP:Group1
 http://example.com/channel1
 #EXTINF:-1 tvg-id="id2" tvg-name="name2",Channel 2
+#EXTGRP:Group2
 http://example.com/channel2
 `,
 			epgContent: `<?xml version="1.0" encoding="ISO-8859-1"?>
@@ -73,11 +77,14 @@ http://example.com/channel2
 			},
 			m3uContent: `#EXTM3U
 #EXTINF:-1 tvg-id="id1" tvg-name="name1",Channel 1
+#EXTGRP:Group1
 http://example.com/channel1
 #EXTINF:-1 tvg-id="id2" tvg-name="name2",Channel 2
+#EXTGRP:Group2
 http://example.com/channel2`,
 			expectedM3u: `#EXTM3U
 #EXTINF:-1 tvg-id="id2" tvg-name="name2",Channel 2
+#EXTGRP:Group2
 http://example.com/channel2
 `,
 			epgContent: `<?xml version="1.0" encoding="ISO-8859-1"?>
@@ -96,13 +103,17 @@ http://example.com/channel2
 			},
 			m3uContent: `#EXTM3U
 #EXTINF:-1 tvg-id="id1" tvg-name="name1",Channel 1
+#EXTGRP:Group1
 http://example.com/channel1
 #EXTINF:-1 tvg-id="id2" tvg-name="name2",Channel 2
+#EXTGRP:Group2
 http://example.com/channel2`,
 			expectedM3u: `#EXTM3U
 #EXTINF:-1 tvg-id="id1" tvg-name="name1",Channel 1
+#EXTGRP:Group1
 http://test.com:6078/channel/0
 #EXTINF:-1 tvg-id="id2" tvg-name="name2",Channel 2
+#EXTGRP:Group2
 http://test.com:6078/channel/1
 `,
 			epgContent: `<?xml version="1.0" encoding="ISO-8859-1"?>
