@@ -98,13 +98,9 @@ maxStreams: 10
 		assert.Equal(t, "iptvserver:8080", config.ServerAddress)
 		assert.True(t, config.UseFFMPEG)
 		assert.Equal(t, 10, config.MaxStreams)
-		assert.Len(t, config.Filters, 1)
-		assert.Equal(t, ".*", config.Filters[0].Value)
-		assert.Equal(t, "name", config.Filters[0].Type)
-		assert.NotNil(t, config.Filters[0].GetRegexp())
+		assert.Len(t, config.Filters, 0)
 		assert.Equal(t, 2*time.Hour, config.RefreshInterval)
 	})
-
 
 	// Test with invalid regular expression
 	t.Run("Invalid Regular Expression", func(t *testing.T) {

@@ -54,6 +54,11 @@ func (pl *playlistLoader) OnPlaylistStart() {
 }
 
 func (pl *playlistLoader) OnTrack(track *Track) {
+	if len(pl.filters) == 0 {
+		pl.processTrack(track, 0)
+		return
+	}
+
 	for i, filter := range pl.filters {
 		var field string
 		switch filter.Type {
@@ -73,31 +78,35 @@ func (pl *playlistLoader) OnTrack(track *Track) {
 		}
 
 		if filter.regexp.Match([]byte(val)) {
-			name := track.Name
+			pl.processTrack(track, i)
+		}
+	}
+}
 
-			if len(track.Tags["tvg-id"]) == 0 {
-				log.WithField("track", track).Warn("missing tvg-id")
+func (pl *playlistLoader) processTrack(track *Track, priority int) {
+	name := track.Name
+
+	if len(track.Tags["tvg-id"]) == 0 {
+		log.WithField("track", track).Debug("missing tvg-id")
+	}
+
+	if existingPriority, exists := pl.priorities[name]; !exists || priority < existingPriority {
+		idx := pl.findIndexWithID(track)
+		if idx != -1 {
+			if strings.Contains(track.Name, "HD") {
+				delete(pl.priorities, pl.tracks[idx].Name)
+				pl.tracks[idx] = *track
+			} else {
+				return
 			}
-
-			if existingPriority, exists := pl.priorities[name]; !exists || i < existingPriority {
-				idx := pl.findIndexWithID(track)
-				if idx != -1 {
-					if strings.Contains(track.Name, "HD") {
-						delete(pl.priorities, pl.tracks[idx].Name)
-						pl.tracks[idx] = *track
-					} else {
-						continue
-					}
-				} else {
-					if !exists {
-						pl.tracks = append(pl.tracks, *track)
-					}
-				}
-				pl.priorities[name] = i
-			} else if exists {
-				log.WithField("track", track).Warn("duplicate name")
+		} else {
+			if !exists {
+				pl.tracks = append(pl.tracks, *track)
 			}
 		}
+		pl.priorities[name] = priority
+	} else {
+		log.WithField("track", track).Warn("duplicate name")
 	}
 }
 

@@ -94,12 +94,6 @@ func LoadConfig(path string) (*Config, error) {
 }
 
 func (c *Config) compileFilterRegexps() error {
-	if len(c.Filters) == 0 {
-		c.Filters = []*Filter{
-			{Value: ".*", Type: "name"},
-		}
-	}
-
 	for i, filter := range c.Filters {
 		re, err := regexp.Compile(filter.Value)
 		if err != nil {
